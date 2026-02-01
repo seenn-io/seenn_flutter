@@ -1,0 +1,32 @@
+# Dart/Flutter
+.dart_tool/
+.packages
+build/
+.pub-cache/
+.pub/
+pubspec.lock
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# macOS
+.DS_Store
+*.xcuserstate
+
+# iOS
+**/Pods/
+**/.symlinks/
+**/Flutter/ephemeral/
+**/xcuserdata/
+
+# Android
+**/gradle-wrapper.jar
+**/.gradle
+**/local.properties
+
+# Example build
+example/build/
+example/.flutter-plugins
+example/.flutter-plugins-dependencies
