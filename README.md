@@ -218,8 +218,10 @@ await seenn.disconnect();
 
 - Flutter >= 3.10.0
 - Dart >= 3.0.0
-- iOS 16.1+ (for Live Activity)
+- iOS 16.2+ (for Live Activity with push updates)
 - Android API 21+ (for Ongoing Notification)
+
+> **Why iOS 16.2?** While Live Activities were introduced in iOS 16.1, the push token API (`pushType: .token`) and `ActivityContent` struct required for remote backend updates were added in iOS 16.2.
 
 ## License
 
