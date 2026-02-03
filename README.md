@@ -20,7 +20,7 @@ Flutter SDK for [Seenn](https://seenn.io) - Real-time job progress tracking with
 
 ```yaml
 dependencies:
-  seenn_flutter: ^0.2.0
+  seenn_flutter: ^0.8.0
 ```
 
 ## Quick Start
