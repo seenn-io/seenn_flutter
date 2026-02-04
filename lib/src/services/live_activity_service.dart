@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import '../config.dart';
+import '../errors/error_codes.dart';
 import '../models/job.dart';
 import '../models/live_activity_cta.dart';
 import '../models/push_authorization.dart';
@@ -489,19 +491,33 @@ class LiveActivityService {
   }
 }
 
-/// Result from starting a Live Activity
+/// Result from a Live Activity operation
 class LiveActivityResult {
+  /// Whether the operation succeeded
   final bool success;
+
+  /// Activity ID (iOS internal ID)
   final String? activityId;
+
+  /// Job ID
   final String? jobId;
+
+  /// Error message if failed
   final String? error;
+
+  /// Error code for programmatic handling
+  final String? code;
+
+  /// Whether the platform doesn't support Live Activities
   final bool isUnsupported;
 
-  LiveActivityResult._({
+  /// Internal constructor
+  LiveActivityResult({
     required this.success,
     this.activityId,
     this.jobId,
     this.error,
+    this.code,
     this.isUnsupported = false,
   });
 
@@ -509,35 +525,57 @@ class LiveActivityResult {
     required String activityId,
     required String jobId,
   }) {
-    return LiveActivityResult._(
+    return LiveActivityResult(
       success: true,
       activityId: activityId,
       jobId: jobId,
     );
   }
 
-  factory LiveActivityResult.error(String error) {
-    return LiveActivityResult._(
+  factory LiveActivityResult.error(String error, {String? code}) {
+    return LiveActivityResult(
       success: false,
       error: error,
+      code: code ?? SeennErrorCode.unknownError,
     );
   }
 
   factory LiveActivityResult.unsupported() {
-    return LiveActivityResult._(
+    if (kDebugMode) {
+      print('[Seenn] Live Activities are only supported on iOS');
+    }
+    return LiveActivityResult(
       success: false,
       error: 'Live Activities are not supported on this platform',
+      code: SeennErrorCode.platformNotSupported,
       isUnsupported: true,
     );
   }
 
   factory LiveActivityResult.bridgeNotRegistered() {
-    return LiveActivityResult._(
+    return LiveActivityResult(
       success: false,
       error: 'Live Activity bridge not registered. '
           'You must call SeennLiveActivityRegistry.shared.register() in your AppDelegate. '
           'See: https://docs.seenn.io/client/flutter#live-activity-setup',
+      code: SeennErrorCode.bridgeNotRegistered,
     );
+  }
+
+  factory LiveActivityResult.validationError(String message, String code) {
+    return LiveActivityResult(
+      success: false,
+      error: message,
+      code: code,
+    );
+  }
+
+  @override
+  String toString() {
+    if (success) {
+      return 'LiveActivityResult.success(activityId: $activityId, jobId: $jobId)';
+    }
+    return 'LiveActivityResult.error(code: $code, error: $error)';
   }
 }
 

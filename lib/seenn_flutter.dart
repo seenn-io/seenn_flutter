@@ -5,6 +5,12 @@
 /// Types are aligned with @seenn/types for cross-SDK compatibility.
 library seenn_flutter;
 
+// Version Info
+export 'src/version.dart';
+
+// Error Codes
+export 'src/errors/error_codes.dart';
+
 // Config
 export 'src/config.dart';
 

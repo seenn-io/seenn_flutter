@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.4] - 2026-02-04
+
+### Added
+- **SDK Version Info** - Programmatic access to SDK version
+  - `sdkVersion` - Current SDK version string ('0.8.4')
+  - `sdkName` - Package name ('seenn_flutter')
+  - `sdkUserAgent` - For API request headers
+
+- **Error Codes** - Standardized error codes for all operations
+  - `SeennErrorCode` class with all error code constants
+  - All `LiveActivityResult` now includes `code` field for programmatic error handling
+  - Codes: `platformNotSupported`, `invalidJobId`, `invalidProgress`, `activityNotFound`, etc.
+
+- **Input Validation** - Client-side validation before native calls
+  - Validates jobId (required, max 128 chars), title, progress (0-100), status
+  - Returns specific error codes for invalid inputs
+
+- **Debug Logging** - Warning logs in debug mode when calling iOS-only APIs on Android
+
+### Changed
+- `LiveActivity.update()` now returns `LiveActivityResult` instead of `bool` for consistency
+- `LiveActivity.end()` now returns `LiveActivityResult` instead of `bool` for consistency
+- `LiveActivity.cancel()` now returns `LiveActivityResult` instead of `bool` for consistency
+- `LiveActivity.cancelAll()` now returns `LiveActivityResult` instead of `bool` for consistency
+- `LiveActivityResult` now has `toString()` for easier debugging
+
+### Example
+```dart
+import 'package:seenn_flutter/seenn_flutter.dart';
+
+print('SDK Version: $sdkVersion'); // '0.8.4'
+
+final result = await LiveActivity.start(
+  jobId: '',  // Invalid!
+  title: 'Test',
+  jobType: 'test',
+);
+
+if (!result.success) {
+  if (result.code == SeennErrorCode.invalidJobId) {
+    print('Invalid job ID!');
+  }
+}
+```
+
 ## [0.8.3] - 2026-02-04
 
 ### Added
