@@ -179,6 +179,25 @@ class LiveActivityService {
     }
   }
 
+  /// Refresh device push token if authorization is already granted
+  ///
+  /// Call this on app launch to ensure you have the latest device
+  /// push token even if permission was granted in a previous session.
+  /// The token will be delivered via [pushTokens] stream.
+  ///
+  /// Returns true if token refresh was triggered, false if not authorized.
+  Future<bool> refreshDevicePushToken() async {
+    if (!Platform.isIOS) return false;
+
+    try {
+      final result = await _methodChannel
+          .invokeMethod<bool>('refreshDevicePushToken');
+      return result ?? false;
+    } catch (e) {
+      return false;
+    }
+  }
+
   /// Start a Live Activity for a job
   ///
   /// Returns the activity ID if successful

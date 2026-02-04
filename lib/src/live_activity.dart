@@ -305,6 +305,26 @@ class LiveActivity {
   static Future<bool> upgradeToStandardPush() =>
       _service.requestStandardPushAuthorization();
 
+  /// Refresh device push token if authorization is already granted
+  ///
+  /// Call this on app launch to ensure you have the latest device
+  /// push token even if permission was granted in a previous session.
+  /// The token will be delivered via [onPushToken] stream.
+  ///
+  /// Returns true if token refresh was triggered, false if not authorized.
+  ///
+  /// ## Example
+  ///
+  /// ```dart
+  /// // On app launch
+  /// final refreshed = await LiveActivity.refreshDevicePushToken();
+  /// if (refreshed) {
+  ///   print('Token refresh triggered');
+  /// }
+  /// ```
+  static Future<bool> refreshDevicePushToken() =>
+      _service.refreshDevicePushToken();
+
   /// Dispose resources
   ///
   /// Call this when you're done using Live Activities to clean up.

@@ -31,6 +31,10 @@ public class SeennFlutterPlugin: NSObject, FlutterPlugin {
 
         // Setup device push token callback
         instance.setupDevicePushTokenCallback()
+
+        // Auto-swizzle AppDelegate on init to capture device tokens
+        // even when permission was granted in a previous session
+        SeennPushTokenHandler.shared.swizzleAppDelegate()
     }
 
     private func setupDevicePushTokenCallback() {
@@ -100,6 +104,9 @@ public class SeennFlutterPlugin: NSObject, FlutterPlugin {
 
         case "requestStandardPushAuthorization":
             handleRequestStandardPushAuthorization(result: result)
+
+        case "refreshDevicePushToken":
+            handleRefreshDevicePushToken(result: result)
 
         default:
             result(FlutterMethodNotImplemented)
@@ -483,6 +490,22 @@ public class SeennFlutterPlugin: NSObject, FlutterPlugin {
                         UIApplication.shared.registerForRemoteNotifications()
                     }
                     result(granted)
+                }
+            }
+        }
+    }
+
+    // MARK: - Refresh Device Push Token
+
+    private func handleRefreshDevicePushToken(result: @escaping FlutterResult) {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            DispatchQueue.main.async {
+                if settings.authorizationStatus == .authorized ||
+                   settings.authorizationStatus == .provisional {
+                    UIApplication.shared.registerForRemoteNotifications()
+                    result(true)
+                } else {
+                    result(false)
                 }
             }
         }

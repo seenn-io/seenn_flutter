@@ -1,6 +1,6 @@
 name: seenn_flutter
 description: Flutter SDK for Seenn - Real-time job progress tracking with Polling and Live Activity support.
-version: 0.8.2
+version: 0.8.3
 homepage: https://seenn.io
 repository: https://github.com/seenn-io/seenn_flutter
 

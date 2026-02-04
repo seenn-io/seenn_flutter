@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.3] - 2026-02-04
+
+### Added
+- **Auto Push Token Registration** - SDK now automatically captures device push tokens on app restart
+  - `refreshDevicePushToken()` - Refresh token if authorization already granted (call on app launch)
+  - Auto-swizzle on SDK init - No longer requires permission request to setup token capture
+
+### Why This Matters
+Previously, if a user granted push permission and then restarted the app, the device token would not be captured because swizzling only happened during permission request. Now the SDK swizzles immediately on init, ensuring tokens are always captured.
+
 ## [0.8.2] - 2026-02-03
 
 ### Fixed
