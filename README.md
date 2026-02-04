@@ -15,12 +15,14 @@ Flutter SDK for [Seenn](https://seenn.io) - Real-time job progress tracking with
 - **ETA Countdown** - Smart time estimates with confidence scores
 - **Parent-Child Jobs** - Hierarchical job relationships
 - **Reactive Streams** - RxDart-powered state management
+- **Error Codes** - Standardized error handling with `SeennErrorCode`
+- **Input Validation** - Client-side validation before native calls
 
 ## Installation
 
 ```yaml
 dependencies:
-  seenn_flutter: ^0.8.0
+  seenn_flutter: ^0.8.4
 ```
 
 ## Quick Start
@@ -106,6 +108,38 @@ if (status.canRequestFullAuthorization) {
 
 > **Note:** Provisional notifications appear silently in Notification Center only.
 > Users can "Keep" or "Turn Off" from their first notification.
+
+## Error Handling
+
+All Live Activity operations return results with error codes for programmatic handling:
+
+```dart
+import 'package:seenn_flutter/seenn_flutter.dart';
+
+print('SDK Version: $sdkVersion'); // '0.8.4'
+
+final result = await LiveActivity.start(
+  jobId: 'job_123',
+  title: 'Processing...',
+  jobType: 'video',
+);
+
+if (!result.success) {
+  switch (result.code) {
+    case SeennErrorCode.platformNotSupported:
+      print('Not on iOS');
+      break;
+    case SeennErrorCode.invalidJobId:
+      print('Invalid job ID');
+      break;
+    case SeennErrorCode.bridgeNotRegistered:
+      print('Native setup incomplete');
+      break;
+    default:
+      print('Error [${result.code}]: ${result.error}');
+  }
+}
+```
 
 ## Android Ongoing Notification
 
@@ -207,6 +241,118 @@ await seenn.reconnect();
 // Disconnect
 await seenn.disconnect();
 ```
+
+## Rich Push Notifications (iOS)
+
+Display images (avatars, thumbnails) in push notifications. Requires a **Notification Service Extension**.
+
+### Setup
+
+1. **Create extension in Xcode:**
+   - Open `ios/Runner.xcworkspace`
+   - File → New → Target → **Notification Service Extension**
+   - Name: `NotificationServiceExtension`
+   - Language: Swift
+
+2. **Replace the generated code** in `NotificationServiceExtension/NotificationService.swift`:
+
+```swift
+import UserNotifications
+
+class NotificationService: UNNotificationServiceExtension {
+    var contentHandler: ((UNNotificationContent) -> Void)?
+    var bestAttemptContent: UNMutableNotificationContent?
+
+    override func didReceive(
+        _ request: UNNotificationRequest,
+        withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void
+    ) {
+        self.contentHandler = contentHandler
+        bestAttemptContent = (request.content.mutableCopy() as? UNMutableNotificationContent)
+
+        guard let bestAttemptContent = bestAttemptContent else {
+            contentHandler(request.content)
+            return
+        }
+
+        // Look for image URL in payload
+        let userInfo = request.content.userInfo
+        let imageUrlString = userInfo["senderAvatar"] as? String
+            ?? userInfo["imageUrl"] as? String
+            ?? userInfo["image"] as? String
+
+        guard let urlString = imageUrlString,
+              let imageUrl = URL(string: urlString) else {
+            contentHandler(bestAttemptContent)
+            return
+        }
+
+        // Download and attach image
+        downloadImage(from: imageUrl) { attachment in
+            if let attachment = attachment {
+                bestAttemptContent.attachments = [attachment]
+            }
+            contentHandler(bestAttemptContent)
+        }
+    }
+
+    override func serviceExtensionTimeWillExpire() {
+        if let contentHandler = contentHandler,
+           let bestAttemptContent = bestAttemptContent {
+            contentHandler(bestAttemptContent)
+        }
+    }
+
+    private func downloadImage(
+        from url: URL,
+        completion: @escaping (UNNotificationAttachment?) -> Void
+    ) {
+        let task = URLSession.shared.downloadTask(with: url) { localUrl, response, error in
+            guard let localUrl = localUrl, error == nil else {
+                completion(nil)
+                return
+            }
+
+            let fileManager = FileManager.default
+            let tempDir = fileManager.temporaryDirectory
+            let fileName = url.lastPathComponent
+            let destUrl = tempDir.appendingPathComponent(fileName)
+
+            try? fileManager.removeItem(at: destUrl)
+            do {
+                try fileManager.moveItem(at: localUrl, to: destUrl)
+                let attachment = try UNNotificationAttachment(
+                    identifier: "image",
+                    url: destUrl,
+                    options: nil
+                )
+                completion(attachment)
+            } catch {
+                completion(nil)
+            }
+        }
+        task.resume()
+    }
+}
+```
+
+3. **Build and run** your app
+
+### Payload Format
+
+Include `mutable-content: 1` and an image URL:
+
+```json
+{
+  "aps": {
+    "alert": { "title": "Message", "body": "Hello!" },
+    "mutable-content": 1
+  },
+  "senderAvatar": "https://example.com/avatar.jpg"
+}
+```
+
+Supported fields: `senderAvatar`, `imageUrl`, `image`
 
 ## Documentation
 
